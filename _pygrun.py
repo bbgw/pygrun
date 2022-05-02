@@ -1,4 +1,4 @@
-#!python
+#!/usr/bin/env python
 __author__ = 'jszheng'
 import optparse
 import sys
@@ -77,7 +77,14 @@ def main():
     else:
         grammar = remainder.pop(0)
         start_rule = remainder.pop(0)
-        file_list = remainder
+        idx = 0
+        _args = []
+        for idx, rem in enumerate(remainder):
+            if os.path.isfile(rem):
+                break
+            else:
+                _args.append(rem)
+        file_list = remainder[idx+1:]
 
     #############################################################
     # check and load antlr generated files
@@ -118,7 +125,7 @@ def main():
     #############################################################
     # main process steps.
     #############################################################
-    def process(input_stream, class_lexer, class_parser):
+    def process(input_stream, class_lexer, class_parser, *args):
         lexer = class_lexer(input_stream)
         token_stream = CommonTokenStream(lexer)
         token_stream.fill()
@@ -128,7 +135,7 @@ def main():
         if start_rule == 'tokens':
             return
 
-        parser = class_parser(token_stream)
+        parser = class_parser(token_stream, *args)
 
         if options.diagnostics:
             parser.addErrorListener(DiagnosticErrorListener())
@@ -153,7 +160,7 @@ def main():
     #############################################################
     if len(file_list) == 0:
         input_stream = InputStream(sys.stdin.read())
-        process(input_stream, class_lexer, class_parser)
+        process(input_stream, class_lexer, class_parser, *_args)
         exit(0)
 
     #############################################################
@@ -162,7 +169,7 @@ def main():
     for file_name in file_list:
         if os.path.exists(file_name) and os.path.isfile(file_name):
             input_stream = FileStream(file_name)
-            process(input_stream, class_lexer, class_parser)
+            process(input_stream, class_lexer, class_parser, *_args)
         else:
             print("[ERROR] file {} not exist".format(os.path.normpath(file_name)))
 
